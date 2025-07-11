@@ -128,6 +128,7 @@ async loadWeights(obj){
 
   /* ---------------- CPU inference (returns K‑vector) ------------------ */
   async predictCPU(vec){
+    if(!this.modelSpec) throw new Error('model not initialised');
     const {inputSize:H,nodesPerLayer:M,outputSize:K}=this.modelSpec;
     vec = vec.slice(0,H).concat(Array(Math.max(0,H-vec.length)).fill(0));
 
@@ -140,7 +141,10 @@ async loadWeights(obj){
     enc.copyBufferToBuffer(this.buffers.weightsHO,0,rbHO,0,bytesHO);
     this.device.queue.submit([enc.finish()]);
     await rbIH.mapAsync(GPUMapMode.READ); await rbHO.mapAsync(GPUMapMode.READ);
-    const wIH=new Float32Array(rbIH.getMappedRange()); const wHO=new Float32Array(rbHO.getMappedRange());
+     const wIH=new Float32Array(rbIH.getMappedRange());
+    const wHO=new Float32Array(rbHO.getMappedRange());
+    for(let i=0;i<wIH.length;i++) if(!Number.isFinite(wIH[i])) wIH[i]=0;
+    for(let i=0;i<wHO.length;i++) if(!Number.isFinite(wHO[i])) wHO[i]=0;
     rbIH.unmap(); rbHO.unmap();
 
     /* forward pass */
@@ -153,6 +157,7 @@ async loadWeights(obj){
     for(let k=0;k<K;++k){
       let sum=0; for(let j=0;j<M;++j) sum+=hid[j]*wHO[k*M+j];
       out[k]=1/(1+Math.exp(-sum));
+      if(!Number.isFinite(out[k])) out[k]=0;
     }
     return Array.from(out);
   }
