@@ -29,36 +29,41 @@ async function loadDataset(){
   if(!raw) throw 'no dataset';
 
   const K = raw.reduce((m,r)=>Math.max(m,r.label.length),1);
+  const H = raw.reduce((m,r)=>Math.max(m,r.text.length),1);
   const samples = raw.map(r=>({
-      input : textVec(r.text),
+      input : padRight(textVec(r.text), H),
       label : bitLabel(r.label, K)
   }));
-  return {samples: samples, K};
+  return {samples: samples, K, H};
 }
 
 /* ───────── TRAIN ───────── */
 document.getElementById('trainBtn').onclick = async () => {
   try{
-    const {samples, K} = await loadDataset();
-    const H = samples[0].input.length;
+    const {samples, K, H} = await loadDataset();
     const M = +document.getElementById('hidden').value || 32;
     const E = +document.getElementById('epochs').value || 1000;
 
     await trainer.init({inputSize:H, nodesPerLayer:M, outputSize:K});
-    await trainer.train(samples, E);
+    await trainer.train(samples, E, (ep,total)=>clog(`epoch ${ep}/${total}`));
     clog('training done');
   }catch(e){ alert(e); }
 };
 
 /* ───────── SAVE ───────── */
 document.getElementById('saveWeightsBtn').onclick = async () => {
-  const path = document.getElementById('saveAs').value.trim();
-  if(!path){ alert('set filename first'); return; }
+  let file = document.getElementById('saveAs').value.trim();
+  if (!file) { alert('set filename first'); return; }
+
+  // always save into the models/ folder
+  if (!file.endsWith('.json')) file += '.json';
+  const path = `models/${file}`;
+
   const w = await trainer.exportWeights();
-  try{
+  try {
     window.electronAPI.saveWeights(path, JSON.stringify(w));
     clog('weights saved →', path);
-  }catch(e){ console.warn('save bridge missing'); }
+  } catch (e) { console.warn('save bridge missing'); }
 };
 
 /* ───────── LOAD ───────── */
