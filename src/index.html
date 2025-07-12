@@ -1,36 +1,43 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>AI Model Trainer</title></head>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
+    <title>AI Model Trainer</title>
+</head>
+
 <body>
-<h1>AI Model Trainer</h1>
+    <h1>AI Model Trainer</h1>
 
-<h2>Training Data</h2>
-<input type="file" id="jsonFileInput" accept=".json"><br><br>
-<textarea id="manualJsonInput" rows="6" cols="50" placeholder="Or paste JSON here …"></textarea>
+    <h2>Training Data</h2>
+    <input type="file" id="jsonFileInput" accept=".json"><br><br>
+    <textarea id="manualJsonInput" rows="6" cols="50" placeholder="Or paste JSON here …"></textarea>
 
-<h2>Model Settings</h2>
-<label>Hidden‑nodes / layer
-  <input id="hidden" type="number" value="128" min="1" max="1024">
-</label><br><br>
+    <h2>Model Settings</h2>
+    <label>Hidden‑nodes / layer
+        <input id="hidden" type="number" value="128" min="1" max="1024">
+    </label><br><br>
 
-<label>Epochs 
-  <input id="epochs" type="number" value="10" min="1" max="100000">
-</label><br><br>
+    <label>Epochs 
+        <input id="epochs" type="number" value="10000" min="1" max="100000">
+    </label><br><br>
 
-<h2>Weights</h2>
-<label>Save‑as 
-  <input id="saveAs" type="text" value="weights.json">
-</label><br><br>
+    <h2>Weights</h2>
+    <label>Save‑as 
+        <input id="saveAs" type="text" value="weights.json">
+    </label><br><br>
 
-<button id="trainBtn">Start training</button>
-<button id="saveWeightsBtn">Save weights</button><br><br>
+    <button id="trainBtn">Start training</button>
+    <button id="saveWeightsBtn">Save weights</button><br><br>
 
-<input id="weightsLoadFile" type="file" accept=".json">
-<button id="loadWeightsBtn">Load weights</button><br><br>
+    <input id="weightsLoadFile" type="file" accept=".json">
+    <button id="loadWeightsBtn">Load weights</button><br><br>
 
-<textarea id="aiPrediction" rows="3" cols="50" placeholder="type text then Predict"></textarea>
-<button id="predictBtn">Predict</button>
+    <textarea id="aiPrediction" rows="3" cols="50" placeholder="type text then Predict"></textarea>
+    <button id="predictBtn">Predict</button>
 
-<script type="module" src="./index.js"></script>
+    <script type="module" src="./index.js"></script>
 </body>
+
 </html>

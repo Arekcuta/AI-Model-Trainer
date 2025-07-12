@@ -1,0 +1,15 @@
+{
+  "max_text_len": 34,
+  "max_lab_len": 14,
+  "layers": [
+    34,
+    256,
+    128,
+    14
+  ],
+  "activ": "relu",
+  "epochs": 50,
+  "batch": 512,
+  "lr": 0.001,
+  "data": "./datasets/cmu_stress.json"
+}
