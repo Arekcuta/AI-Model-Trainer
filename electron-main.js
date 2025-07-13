@@ -1,36 +1,46 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const { spawn } = require('child_process');
+const { app, BrowserWindow } = require('electron');
 const fs = require('fs');
+const path = require('path');
 
-app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
+const boundsFile = path.join(app.getPath('userData'), 'window-bounds.json');
+let mainWin;
 
+/* ---- helpers ---------------------------------------------------- */
+const loadBounds = () => {
+  try { return JSON.parse(fs.readFileSync(boundsFile, 'utf8')); }
+  catch { return { width: 1200, height: 800 }; }
+};
+
+const saveBounds = () => {
+  if (mainWin?.isDestroyed()) return;
+  fs.writeFileSync(boundsFile, JSON.stringify(mainWin.getBounds()));
+};
+
+/* ---- window ----------------------------------------------------- */
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+  mainWin = new BrowserWindow({
+    ...loadBounds(),
     webPreferences: {
       preload: path.join(__dirname, 'src', 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: true,
+      nodeIntegration: true,
     }
   });
 
-  win.setMenu(null);
-  win.loadFile('src/index.html');
-  win.webContents.openDevTools();
+  mainWin.setMenu(null);
+  mainWin.loadFile('src/index.html');
+  mainWin.webContents.openDevTools();
+
+  // debounce spammy events
+  let t;
+  const bump = () => { clearTimeout(t); t = setTimeout(saveBounds, 250); };
+  mainWin.on('move', bump);
+  mainWin.on('resize', bump);
 }
 
 app.whenReady().then(() => {
   createWindow();
-
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+  app.on('activate', () => BrowserWindow.getAllWindows().length || createWindow());
 });
 
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();
-});
-
-
+app.on('window-all-closed', () => process.platform !== 'darwin' && app.quit());

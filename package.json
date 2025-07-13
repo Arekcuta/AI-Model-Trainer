@@ -21,6 +21,8 @@
     "onnxruntime-node": "^1.22.0-rev"
   },
   "electronWebpack": {
-    "whiteListedModules": ["onnxruntime-node"]
+    "whiteListedModules": [
+      "onnxruntime-node"
+    ]
   }
 }

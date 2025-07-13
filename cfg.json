@@ -8,8 +8,8 @@
     14
   ],
   "activ": "relu",
-  "epochs": 50,
+  "epochs": 10000,
   "batch": 512,
   "lr": 0.001,
-  "data": "./datasets/cmu_stress.json"
+  "data": "./../datasets/cmu_stress.json"
 }

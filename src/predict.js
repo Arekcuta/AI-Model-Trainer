@@ -1,6 +1,6 @@
-import * as ort from 'onnxruntime-gpu';
-import fs from 'fs';
-import path from 'path';
+import * as ort from 'onnxruntime';
+import fs from 'node:fs';
+import path from 'node:path';
 
 /* ── 1 · load cfg so we know padding lengths ─────────────────────── */
 const cfg = JSON.parse(fs.readFileSync('cfg.json', 'utf8'));

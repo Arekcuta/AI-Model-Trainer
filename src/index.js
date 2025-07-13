@@ -1,7 +1,14 @@
 
 /* ------------- TRAIN ------------------------------------------------ */
 document.getElementById('trainBtn').addEventListener('click', () => {
-    const rows = window.fileAPI.readJSON('datasets/cmu_stress.json');
+    console.log('Training started...');
+    const epochs = parseInt(document.getElementById('epochs').value, 10);
+
+    const dataFileInput = document.getElementById('jsonFileInput');
+    const filePath = dataFileInput.files[0]?.path;          // real path in Electron
+    const dataFile = filePath || './../datasets/cmu_stress.json';
+
+    const rows = window.fileAPI.readJSON(dataFile);
     let maxTextLen = 0, maxLabelLen = 0;
     for (const { text = '', label = '' } of rows) {
         if (text.length > maxTextLen) maxTextLen = text.length;
@@ -13,12 +20,12 @@ document.getElementById('trainBtn').addEventListener('click', () => {
         max_lab_len: maxLabelLen,
         layers: [maxTextLen, 256, 128, maxLabelLen],
         activ: 'relu',
-        epochs: 50,
+        epochs: epochs,
         batch: 512,
         lr: 1e-3,
-        data: './datasets/cmu_stress.json'
+        data: dataFile
     };
-
+    console.log('Training config:', cfg);
     window.aiBridge.train(cfg);      // call preload proxy
 });
 
