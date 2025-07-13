@@ -17,11 +17,15 @@ function vecText(str) {
 
 /* ── 3 · post‑process logits → "10101…" string ────────────────────── */
 function logitsToBits(floatArr) {
-    let out = '';
-    for (let i = 0; i < max_lab_len; i++) {
-        out += floatArr[i] > 0 ? '1' : '0';        // sigmoid(x)>0.5 ⇔ x>0
-    }
-    return out;
+    // let out = '';
+    // for (let i = 0; i < max_lab_len; i++) {
+    //     out += floatArr[i] > 0 ? '1' : '0';        // sigmoid(x)>0.5 ⇔ x>0
+    // }
+    // return out;
+    return floatArr
+        .slice(0, max_lab_len)
+        .map(v => v.toFixed(4))
+        .join(',');
 }
 
 /* ── 4 · create ONNX session (GPU)  once at startup ───────────────── */

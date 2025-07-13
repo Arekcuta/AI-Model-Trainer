@@ -9,8 +9,13 @@
     /* ----- TRAIN ----------------------------------------------------- */
     function train(cfg) {
         console.log('Training with config:', cfg);
-        fs.writeFileSync('cfg.json', JSON.stringify(cfg, null, 2));
-        const py = spawn('python', ['./trainer.py', './../cfg.json']);
+        const cfgPath = path.join(__dirname, '..', 'cfg.json');
+        fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+        const py = spawn(
+            'python',
+            [path.join(__dirname, 'trainer.py'), cfgPath],
+            { cwd: path.join(__dirname) }
+        );
         py.stdout.on('data', d => ipcRenderer.send('train-log', d.toString()));
         py.stderr.on('data', d => ipcRenderer.send('train-log', d.toString()));
         py.on('close', c => ipcRenderer.send('train-exit', c));
@@ -39,14 +44,16 @@
             out[i] = txt.charCodeAt(i) / 255;
         return out;
     };
-    const bits = f32 => [...f32].map(v => (v > 0 ? '1' : '0')).join('');
+    function bits(floatArr) {
+        return floatArr.slice(0, max_lab_len).map(v => v.toFixed(4)).join(' , ');
+    }
 
     /* ----- PREDICT --------------------------------------------------- */
     async function predict(text) {
         if (!session) throw new Error('Model not loaded—train first.');
         const tensor = new ort.Tensor('float32', vecText(text), [1, max_text_len]);
         const { logits } = await session.run({ input: tensor });
-        return bits(logits.data);
+        return bits(Array.from(logits.data));
     }
 
     /* ----- expose to renderer --------------------------------------- */
