@@ -18,7 +18,7 @@ document.getElementById('trainBtn').addEventListener('click', () => {
     const cfg = {
         max_text_len: maxTextLen,
         max_lab_len: maxLabelLen,
-        layers: [maxTextLen, 256, 128, maxLabelLen],
+        layers: [maxTextLen, 512, 256, 128, maxLabelLen],
         activ: 'relu',
         epochs: epochs,
         batch: 512,
@@ -35,3 +35,17 @@ document.getElementById('predictBtn').addEventListener('click', async () => {
     const bits = await window.aiBridge.predict(txt);
     console.log(`"${txt}" ➜ ${bits}`);
 });
+
+
+if (window.trainEvents) {
+    window.trainEvents.onLog(msg => {
+        const el = document.getElementById('trainLog');
+        el.value += msg;
+        el.scrollTop = el.scrollHeight;
+    });
+    window.trainEvents.onExit(code => {
+        const el = document.getElementById('trainLog');
+        el.value += `\nprocess exited ${code}\n`;
+        el.scrollTop = el.scrollHeight;
+    });
+}

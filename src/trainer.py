@@ -75,7 +75,7 @@ def maybe_compile(model):
 def main(cfg_path: str):
     cfg       = json.load(open(cfg_path))
     workers   = min(8, os.cpu_count())
-    batch   = cfg.get("batch", 32768)          # keep the same
+    batch   = cfg.get("batch", 4096)          # keep the same
     X, y    = load_or_build_npz(cfg["data"], cfg["max_text_len"], cfg["max_lab_len"])
     loader  = make_loader(X, y, batch)        # ← new call returns an iterator factory
 
@@ -95,13 +95,13 @@ def main(cfg_path: str):
             scaler.step(opt); scaler.update(); opt.zero_grad(set_to_none=True)
         print(json.dumps({"epoch": epoch, "loss": loss.item()}), flush=True)
 
-    torch.save(model.state_dict(), "./models/model_weights.pt")
-    torch.jit.script(model).save("./models/model_scripted.pt")
+    torch.save(model.state_dict(), "./../models/model_weights.pt")
+    torch.jit.script(model).save("./../models/model_scripted.pt")
 
     try:
         import onnx  # noqa: F401
         dummy = torch.zeros(1, cfg["layers"][0], device=device)
-        torch.onnx.export(model, dummy, "./models/model.onnx",
+        torch.onnx.export(model, dummy, "./../models/model.onnx",
                           input_names=["input"], output_names=["logits"],
                           opset_version=18)
     except ImportError:

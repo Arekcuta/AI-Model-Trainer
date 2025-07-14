@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
@@ -44,3 +44,15 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => process.platform !== 'darwin' && app.quit());
+
+ipcMain.on('train-log', (_e, msg) => {
+  if (mainWin && !mainWin.isDestroyed())
+    mainWin.webContents.send('train-log', msg);
+  console.log(msg.trim());
+});
+
+ipcMain.on('train-exit', (_e, code) => {
+  if (mainWin && !mainWin.isDestroyed())
+    mainWin.webContents.send('train-exit', code);
+  console.log('trainer exited', code);
+});

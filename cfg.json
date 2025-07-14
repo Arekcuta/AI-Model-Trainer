@@ -3,12 +3,14 @@
   "max_lab_len": 14,
   "layers": [
     34,
+    512,
     256,
     128,
+    64,
     14
   ],
   "activ": "relu",
-  "epochs": 10000,
+  "epochs": 100,
   "batch": 512,
   "lr": 0.001,
   "data": "./../datasets/cmu_stress.json"

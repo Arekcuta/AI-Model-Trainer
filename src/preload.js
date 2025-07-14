@@ -44,8 +44,14 @@
             out[i] = txt.charCodeAt(i) / 255;
         return out;
     };
+
+    const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);
+
     function bits(floatArr) {
-        return floatArr.slice(0, max_lab_len).map(v => v.toFixed(4)).join(' , ');
+        return floatArr
+            .slice(0, max_lab_len)
+            .map(v => clamp(v, -.5, 1).toFixed(4))
+            .join(', ');
     }
 
     /* ----- PREDICT --------------------------------------------------- */
@@ -62,4 +68,9 @@
             JSON.parse(fs.readFileSync(path.join(__dirname, relPath), 'utf8'))
     });
     contextBridge.exposeInMainWorld('aiBridge', { train, predict });
+    contextBridge.exposeInMainWorld('trainEvents', {
+        onLog: fn => ipcRenderer.on('train-log', (_e, m) => fn(m)),
+        onExit: fn => ipcRenderer.on('train-exit', (_e, c) => fn(c))
+    });
+    
 })();
