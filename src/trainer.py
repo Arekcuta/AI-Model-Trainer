@@ -1,4 +1,11 @@
-import os, json, sys, torch, torch.nn as nn, torch.optim as optim
+import os, json, sys
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+except ModuleNotFoundError:
+    print("PyTorch is required. Install it from https://pytorch.org", file=sys.stderr)
+    sys.exit(1)
 import numpy as np
 from pathlib import Path
 
