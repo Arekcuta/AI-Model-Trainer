@@ -12,17 +12,31 @@ document.getElementById('trainBtn').addEventListener('click', () => {
     window.aiBridge.train(cfg);
 });
 
-document.getElementById('loadCfgBtn').addEventListener('click', () => {
+async function readJSONFile(file) {
+    if (file.path)
+        return window.fileAPI.readJSON(file.path);
+    const text = await file.text();
+    return JSON.parse(text);
+}
+
+async function ensureDatasetPath(file) {
+    if (file.path) return file.path;
+    const text = await file.text();
+    return window.fileAPI.writeDataset(file.name || 'dataset.json', text);
+}
+
+
+document.getElementById('loadCfgBtn').addEventListener('click', async () => {
     const f = document.getElementById('cfgFile').files[0];
     if (!f) return;
-    const cfgObj = window.fileAPI.readJSON(f.path);
+    const cfgObj = await readJSONFile(f);
     document.getElementById('cfgInput').value = JSON.stringify(cfgObj, null, 2);
 });
 
-document.getElementById('toJsonBtn').addEventListener('click', () => {
+document.getElementById('toJsonBtn').addEventListener('click', async () => {
     const dataFile = document.getElementById('dataFile').files[0];
     if (!dataFile) { alert('Choose data file'); return; }
-    const rows = window.fileAPI.readJSON(dataFile.path);
+    const rows = await readJSONFile(dataFile);
     let maxText = 0, maxLab = 0;
     for (const r of rows) {
         const t = r.text || '';
@@ -33,7 +47,7 @@ document.getElementById('toJsonBtn').addEventListener('click', () => {
     const layers = document.getElementById('layers').value
         .split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
     const cfg = {
-        data: dataFile.path,
+        data: await ensureDatasetPath(dataFile),
         max_text_len: maxText,
         max_lab_len: maxLab,
         model: document.getElementById('modelType').value,
