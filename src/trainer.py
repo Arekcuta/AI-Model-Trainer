@@ -1,7 +1,6 @@
 import os, json, sys, torch, torch.nn as nn, torch.optim as optim
 import numpy as np
 from pathlib import Path
-from torch.utils.data import DataLoader, TensorDataset
 
 torch.backends.cudnn.benchmark = True
 device = "cuda"
@@ -47,7 +46,7 @@ def make_loader(X_np: np.ndarray, y_np: np.ndarray, batch: int):
 
 
 # ── simple MLP ───────────────────────────────────────────────────────
-class Net(nn.Module):
+class MLP(nn.Module):
     def __init__(self, layers, act):
         super().__init__()
         act = dict(relu=nn.ReLU, gelu=nn.GELU)[act]
@@ -55,7 +54,37 @@ class Net(nn.Module):
         for i, o in zip(layers, layers[1:]):
             seq += [nn.Linear(i, o), act()]
         self.core = nn.Sequential(*seq[:-1])  # last act removed
-    def forward(self, x): return self.core(x)
+
+    def forward(self, x):
+        return self.core(x)
+
+
+class BiLSTM(nn.Module):
+    def __init__(self, hidden, out_size):
+        super().__init__()
+        self.lstm = nn.LSTM(1, hidden, batch_first=True, bidirectional=True)
+        self.fc = nn.Linear(hidden * 2, out_size)
+
+    def forward(self, x):
+        x = x.unsqueeze(-1)
+        _, (h, _) = self.lstm(x)
+        h = torch.cat((h[-2], h[-1]), dim=1)
+        return self.fc(h)
+
+
+class TransformerNet(nn.Module):
+    def __init__(self, dim, depth, heads, out_size):
+        super().__init__()
+        self.proj = nn.Linear(1, dim)
+        layer = nn.TransformerEncoderLayer(dim, heads, batch_first=True)
+        self.enc = nn.TransformerEncoder(layer, depth)
+        self.fc = nn.Linear(dim, out_size)
+
+    def forward(self, x):
+        x = self.proj(x.unsqueeze(-1))
+        x = self.enc(x)
+        x = x.mean(dim=1)
+        return self.fc(x)
 
 # ── optional compile helper (skip Triton on Windows) ────────────────
 def maybe_compile(model):
@@ -80,7 +109,18 @@ def main(cfg_path: str):
     loader  = make_loader(X, y, batch)        # ← new call returns an iterator factory
 
 
-    model = maybe_compile(Net(cfg["layers"], cfg["activ"]).to(device))
+    model_type = cfg.get("model", "mlp")
+    if model_type == "bilstm":
+        hidden = cfg.get("hidden", 128)
+        model = BiLSTM(hidden, cfg["max_lab_len"]) 
+    elif model_type == "transformer":
+        dim = cfg.get("d_model", 128)
+        depth = cfg.get("depth", 2)
+        heads = cfg.get("heads", 4)
+        model = TransformerNet(dim, depth, heads, cfg["max_lab_len"])
+    else:
+        model = MLP(cfg["layers"], cfg.get("activ", "relu"))
+    model = maybe_compile(model.to(device))
     opt       = optim.AdamW(model.parameters(), lr=cfg["lr"])
     lossf     = nn.BCEWithLogitsLoss()
     scaler    = torch.amp.GradScaler("cuda")
@@ -100,7 +140,10 @@ def main(cfg_path: str):
 
     try:
         import onnx  # noqa: F401
-        dummy = torch.zeros(1, cfg["layers"][0], device=device)
+        if model_type == "mlp":
+            dummy = torch.zeros(1, cfg["layers"][0], device=device)
+        else:
+            dummy = torch.zeros(1, cfg["max_text_len"], device=device)
         torch.onnx.export(model, dummy, "./../models/model.onnx",
                           input_names=["input"], output_names=["logits"],
                           opset_version=18)

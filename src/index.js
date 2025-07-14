@@ -1,41 +1,50 @@
 
 /* ------------- TRAIN ------------------------------------------------ */
 document.getElementById('trainBtn').addEventListener('click', () => {
-    console.log('Training started...');
-    const epochs = parseInt(document.getElementById('epochs').value, 10);
-
-    const dataFileInput = document.getElementById('jsonFileInput');
-    const filePath = dataFileInput.files[0]?.path;          // real path in Electron
-    const dataFile = filePath || './../datasets/cmu_stress.json';
-
-    const rows = window.fileAPI.readJSON(dataFile);
-    let maxTextLen = 0, maxLabelLen = 0;
-    for (const { text = '', label = '' } of rows) {
-        if (text.length > maxTextLen) maxTextLen = text.length;
-        if (label.length > maxLabelLen) maxLabelLen = label.length;
+    const text = document.getElementById('cfgInput').value;
+    let cfg;
+    try { cfg = JSON.parse(text); }
+    catch (e) {
+        alert('Invalid JSON configuration');
+        return;
     }
-
-    const cfg = {
-        max_text_len: maxTextLen,
-        max_lab_len: maxLabelLen,
-        layers: [maxTextLen, 512, 256, 128, maxLabelLen],
-        activ: 'relu',
-        epochs: epochs,
-        batch: 512,
-        lr: 1e-3,
-        data: dataFile
-    };
     console.log('Training config:', cfg);
-    window.aiBridge.train(cfg);      // call preload proxy
+    window.aiBridge.train(cfg);
 });
 
-/* ------------- PREDICT --------------------------------------------- */
-document.getElementById('predictBtn').addEventListener('click', async () => {
-    const txt = document.getElementById('aiPrediction').value;
-    const bits = await window.aiBridge.predict(txt);
-    console.log(`"${txt}" ➜ ${bits}`);
+document.getElementById('loadCfgBtn').addEventListener('click', () => {
+    const f = document.getElementById('cfgFile').files[0];
+    if (!f) return;
+    const cfgObj = window.fileAPI.readJSON(f.path);
+    document.getElementById('cfgInput').value = JSON.stringify(cfgObj, null, 2);
 });
 
+document.getElementById('toJsonBtn').addEventListener('click', () => {
+    const dataFile = document.getElementById('dataFile').files[0];
+    if (!dataFile) { alert('Choose data file'); return; }
+    const rows = window.fileAPI.readJSON(dataFile.path);
+    let maxText = 0, maxLab = 0;
+    for (const r of rows) {
+        const t = r.text || '';
+        const l = r.label || '';
+        if (t.length > maxText) maxText = t.length;
+        if (l.length > maxLab) maxLab = l.length;
+    }
+    const layers = document.getElementById('layers').value
+        .split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+    const cfg = {
+        data: dataFile.path,
+        max_text_len: maxText,
+        max_lab_len: maxLab,
+        model: document.getElementById('modelType').value,
+        layers: [maxText, ...layers, maxLab],
+        activ: document.getElementById('activ').value,
+        epochs: parseInt(document.getElementById('epochs').value, 10),
+        batch: parseInt(document.getElementById('batch').value, 10),
+        lr: parseFloat(document.getElementById('lr').value)
+    };
+    document.getElementById('cfgInput').value = JSON.stringify(cfg, null, 2);
+});
 
 if (window.trainEvents) {
     window.trainEvents.onLog(msg => {

@@ -21,6 +21,13 @@
         py.on('close', c => ipcRenderer.send('train-exit', c));
     }
 
+    async function loadModel(cfgPath, modelPath) {
+        const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        max_text_len = cfg.max_text_len;
+        max_lab_len = cfg.max_lab_len;
+        session = await ort.InferenceSession.create(modelPath);
+    }
+
     /* ----- LOAD MODEL & CFG ----------------------------------------- */
     const cfgPath = path.join(__dirname, '..', 'cfg.json');
     let max_text_len = 0,
@@ -64,10 +71,13 @@
 
     /* ----- expose to renderer --------------------------------------- */
     contextBridge.exposeInMainWorld('fileAPI', {
-        readJSON: relPath =>
-            JSON.parse(fs.readFileSync(path.join(__dirname, relPath), 'utf8'))
+        readJSON: targetPath => {
+            if (!path.isAbsolute(targetPath))
+                targetPath = path.join(__dirname, targetPath);
+            return JSON.parse(fs.readFileSync(targetPath, 'utf8'));
+        }
     });
-    contextBridge.exposeInMainWorld('aiBridge', { train, predict });
+    contextBridge.exposeInMainWorld('aiBridge', { train, predict, loadModel });
     contextBridge.exposeInMainWorld('trainEvents', {
         onLog: fn => ipcRenderer.on('train-log', (_e, m) => fn(m)),
         onExit: fn => ipcRenderer.on('train-exit', (_e, c) => fn(c))

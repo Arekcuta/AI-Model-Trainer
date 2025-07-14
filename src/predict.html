@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
+    <title>Predict</title>
+</head>
+<body>
+    <h1>Predict</h1>
+    <p><a href="index.html">Back to Training</a></p>
+
+    <h2>Load Model</h2>
+    <input type="file" id="cfgFile" accept=".json"> Config<br>
+    <input type="file" id="onnxFile" accept=".onnx"> Model<br>
+    <button id="loadBtn">Load Model</button>
+
+    <h2>Predict</h2>
+    <textarea id="predInput" rows="3" cols="50" placeholder="type text"></textarea>
+    <button id="predictBtn">Predict</button>
+    <pre id="predOut"></pre>
+
+    <script type="module" src="./predictPage.js"></script>
+</body>
+</html>

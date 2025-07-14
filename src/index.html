@@ -9,33 +9,32 @@
 
 <body>
     <h1>AI Model Trainer</h1>
+    <p><a href="predict.html">Go to Predictor</a></p>
 
-    <h2>Training Data</h2>
-    <input type="file" id="jsonFileInput" accept=".json"><br><br>
-    <textarea id="manualJsonInput" rows="6" cols="50" placeholder="Or paste JSON here …"></textarea>
+    <h2>Build Config</h2>
+    <label>Data <input type="file" id="dataFile" accept=".json"></label><br>
+    <label>Model
+        <select id="modelType">
+            <option value="mlp">MLP</option>
+            <option value="bilstm">Bi-LSTM</option>
+            <option value="transformer">Transformer</option>
+        </select>
+    </label><br>
+    <label>Layers (comma separated)
+        <input id="layers" type="text" value="256,128">
+    </label><br>
+    <label>Activation <input id="activ" type="text" value="relu"></label><br>
+    <label>Epochs <input id="epochs" type="number" value="10" min="1"></label><br>
+    <label>Batch <input id="batch" type="number" value="512" min="1"></label><br>
+    <label>LR <input id="lr" type="number" value="0.001" step="0.0001"></label><br>
+    <button id="toJsonBtn">Build JSON</button>
 
-    <h2>Model Settings</h2>
-    <label>Hidden‑nodes / layer
-        <input id="hidden" type="number" value="128" min="1" max="1024">
-    </label><br><br>
-
-    <label>Epochs 
-        <input id="epochs" type="number" value="10000" min="1" max="100000">
-    </label><br><br>
-
-    <h2>Weights</h2>
-    <label>Save‑as 
-        <input id="saveAs" type="text" value="weights.json">
-    </label><br><br>
+    <h2>Training Config</h2>
+    <textarea id="cfgInput" rows="10" cols="80"></textarea><br>
+    <input type="file" id="cfgFile" accept=".json">
+    <button id="loadCfgBtn">Load Config</button>
 
     <button id="trainBtn">Start training</button>
-    <button id="saveWeightsBtn">Save weights</button><br><br>
-
-    <input id="weightsLoadFile" type="file" accept=".json">
-    <button id="loadWeightsBtn">Load weights</button><br><br>
-
-    <textarea id="aiPrediction" rows="3" cols="50" placeholder="type text then Predict"></textarea>
-    <button id="predictBtn">Predict</button>
 
     <h2>Training Log</h2>
     <textarea id="trainLog" rows="10" cols="80" readonly></textarea>
