@@ -1,0 +1,16 @@
+{
+  "data": "C:\\Users\\tuckj\\code\\ai-model-trainer\\datasets\\cmu_stress.json",
+  "max_text_len": 34,
+  "max_lab_len": 14,
+  "model": "mlp",
+  "layers": [
+    34,
+    256,
+    128,
+    14
+  ],
+  "activ": "relu",
+  "epochs": 10,
+  "batch": 512,
+  "lr": 0.001
+}

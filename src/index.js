@@ -36,6 +36,7 @@ document.getElementById('loadCfgBtn').addEventListener('click', async () => {
 document.getElementById('toJsonBtn').addEventListener('click', async () => {
     const dataFile = document.getElementById('dataFile').files[0];
     if (!dataFile) { alert('Choose data file'); return; }
+
     const rows = await readJSONFile(dataFile);
     let maxText = 0, maxLab = 0;
     for (const r of rows) {
@@ -44,8 +45,10 @@ document.getElementById('toJsonBtn').addEventListener('click', async () => {
         if (t.length > maxText) maxText = t.length;
         if (l.length > maxLab) maxLab = l.length;
     }
+
     const layers = document.getElementById('layers').value
         .split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+
     const cfg = {
         data: await ensureDatasetPath(dataFile),
         max_text_len: maxText,
@@ -58,6 +61,7 @@ document.getElementById('toJsonBtn').addEventListener('click', async () => {
         lr: parseFloat(document.getElementById('lr').value)
     };
     document.getElementById('cfgInput').value = JSON.stringify(cfg, null, 2);
+    console.log(document.getElementById('cfgInput').value);
 });
 
 if (window.trainEvents) {

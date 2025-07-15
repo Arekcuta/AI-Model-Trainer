@@ -128,6 +128,11 @@ def main(cfg_path: str):
     else:
         model = MLP(cfg["layers"], cfg.get("activ", "relu"))
     model = maybe_compile(model.to(device))
+
+    resume = cfg.get("resume")
+    if resume and os.path.exists(resume):
+        print(f"Loading weights from {resume}", flush=True)
+        model.load_state_dict(torch.load(resume, map_location=device))
     opt       = optim.AdamW(model.parameters(), lr=cfg["lr"])
     lossf     = nn.BCEWithLogitsLoss()
     scaler    = torch.amp.GradScaler("cuda")
@@ -142,8 +147,17 @@ def main(cfg_path: str):
             scaler.step(opt); scaler.update(); opt.zero_grad(set_to_none=True)
         print(json.dumps({"epoch": epoch, "loss": loss.item()}), flush=True)
 
-    torch.save(model.state_dict(), "./../models/model_weights.pt")
-    torch.jit.script(model).save("./../models/model_scripted.pt")
+    model_dir_base = Path("./../models")
+    i = 0
+    while (model_dir_base / f"model{i}").exists():
+        i += 1
+    model_dir = model_dir_base / f"model{i}"
+    model_dir.mkdir(parents=True)
+
+    # ── save model and config ────────────────────────────────────────
+    torch.save(model.state_dict(), model_dir / "model_weights.pt")
+    torch.jit.script(model).save(model_dir / "model_scripted.pt")
+    json.dump(cfg, open(model_dir / "cfg.json", "w"), indent=2)
 
     try:
         import onnx  # noqa: F401
@@ -151,9 +165,15 @@ def main(cfg_path: str):
             dummy = torch.zeros(1, cfg["layers"][0], device=device)
         else:
             dummy = torch.zeros(1, cfg["max_text_len"], device=device)
-        torch.onnx.export(model, dummy, "./../models/model.onnx",
-                          input_names=["input"], output_names=["logits"],
-                          opset_version=18)
+        torch.onnx.export(
+            model,
+            dummy,
+            model_dir / "model.onnx",
+            input_names=["input"],
+            output_names=["logits"],
+            opset_version=18,
+            dynamic_axes={"input": {0: "batch"}, "logits": {0: "batch"}},
+        )
     except ImportError:
         print("ONNX not installed – skipped export", flush=True)
 
